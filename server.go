@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	pushregistry "github.com/RusseLHuang/push-message-example/push_registry"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
+	"github.com/spf13/viper"
 )
 
 type Client struct {
@@ -32,6 +34,7 @@ func setOutboundIP() {
 
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 	nodeIP = localAddr.IP.String()
+	log.Println("Node IP: ", nodeIP)
 }
 
 func closeConn(deviceID string) {
@@ -92,6 +95,14 @@ func main() {
 	flag.Parse()
 	log.SetFlags(0)
 
+	viper.AddConfigPath(".")
+	viper.SetConfigName("config")
+	viper.SetConfigType("json")
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+
 	setOutboundIP()
 	pushregistry.InitClientConnection()
 
@@ -101,7 +112,9 @@ func main() {
 	router.HandleFunc("/connect/{clientID}", connect)
 	router.HandleFunc("/sendMessage/{clientID}", sendMessage)
 
-	http.Handle("/", router)
-
-	log.Fatal(http.ListenAndServe(*addr, nil))
+	log.Println("Starting Server")
+	src := &http.Server{
+		Handler: router,
+	}
+	src.ListenAndServe()
 }

@@ -1,0 +1,4 @@
+{
+  "pushRegistryHost": "push-registry",
+  "pushRegistryPort": 6379
+}

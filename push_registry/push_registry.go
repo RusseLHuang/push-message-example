@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/spf13/viper"
 )
 
 var ctx = context.Background()
@@ -15,8 +16,12 @@ func InitClientConnection() {
 		return
 	}
 
+	registryHost := viper.Get("pushRegistryHost")
+	registryPort := viper.Get("pushRegistryPort")
+	uri := fmt.Sprintf("%s:%v", registryHost, registryPort)
+
 	redisClient = redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     uri,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
@@ -32,7 +37,7 @@ func SetPersistentConnectionID(clientID string, nodeIP string) {
 func GetPersistentConnectionID(clientID string) string {
 	val, err := redisClient.Get(ctx, clientID).Result()
 	if err == redis.Nil {
-		fmt.Println("key2 does not exist")
+		fmt.Println("clientID does not exist", clientID)
 	} else if err != nil {
 		panic(err)
 	}
