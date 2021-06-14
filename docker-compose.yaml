@@ -2,6 +2,27 @@
 version: '3.1'
 
 services:
+  ws-server1:
+    image: pushmessage:latest
+    container_name: ws-server1
+    ports:
+      - 81:80
+    networks: 
+      - ws-playground
+  ws-server2:
+    image: pushmessage:latest
+    container_name: ws-server2
+    ports:
+      - 82:80
+    networks: 
+      - ws-playground
+  ws-server3:
+    image: pushmessage:latest
+    container_name: ws-server3
+    ports:
+      - 83:80
+    networks: 
+      - ws-playground
   message-queue:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq
