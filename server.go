@@ -80,6 +80,14 @@ func sendMessage(w http.ResponseWriter, r *http.Request) {
 
 	conn := clientConnMap[vars["clientID"]].conn
 
+	// Fire and Forget
+	if conn == nil {
+		resp := "Client ID connection is not exist in current node"
+		w.WriteHeader(http.StatusAccepted)
+		w.Write([]byte(resp))
+		return
+	}
+
 	log.Printf("sending to : %s", vars["clientID"])
 
 	err := conn.WriteMessage(1, []byte("My websocket message"))
