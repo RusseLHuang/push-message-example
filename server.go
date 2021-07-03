@@ -4,100 +4,15 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 
+	"github.com/RusseLHuang/push-message-example/message"
+	"github.com/RusseLHuang/push-message-example/node"
 	pushregistry "github.com/RusseLHuang/push-message-example/push_registry"
+	wsconnection "github.com/RusseLHuang/push-message-example/ws_connection"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 	"github.com/spf13/viper"
 )
-
-type Client struct {
-	clientID string
-	conn     *websocket.Conn
-}
-
-var clientConnMap map[string]Client
-
-var addr = flag.String("addr", "localhost:8080", "http service address")
-var upgrader = websocket.Upgrader{} // use default options
-var nodeIP string
-
-func setOutboundIP() {
-	conn, err := net.Dial("udp", "8.8.8.8:80")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer conn.Close()
-
-	localAddr := conn.LocalAddr().(*net.UDPAddr)
-	nodeIP = localAddr.IP.String()
-	log.Println("Node IP: ", nodeIP)
-}
-
-func closeConn(deviceID string) {
-	clientConnMap[deviceID].conn.Close()
-}
-
-func connect(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	log.Print(vars["clientID"])
-
-	c, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-
-	clientConnMap[vars["clientID"]] = Client{
-		clientID: vars["clientID"],
-		conn:     c,
-	}
-
-	pushregistry.SetPersistentConnectionID(vars["clientID"], nodeIP)
-
-	defer closeConn(vars["clientID"])
-
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-		err = c.WriteMessage(mt, message)
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
-	}
-}
-
-func sendMessage(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-
-	conn := clientConnMap[vars["clientID"]].conn
-
-	// Fire and Forget
-	if conn == nil {
-		resp := "Client ID connection is not exist in current node"
-		w.WriteHeader(http.StatusAccepted)
-		w.Write([]byte(resp))
-		return
-	}
-
-	log.Printf("sending to : %s", vars["clientID"])
-
-	err := conn.WriteMessage(1, []byte("My websocket message"))
-
-	if err != nil {
-		log.Println("write:", err)
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
 
 func main() {
 	flag.Parse()
@@ -111,14 +26,17 @@ func main() {
 		panic(fmt.Errorf("Fatal error config file: %s \n", err))
 	}
 
-	setOutboundIP()
-	pushregistry.InitClientConnection()
+	nodeService := node.NewNode()
+	pushRegistry := pushregistry.NewPushRegistry()
+	wsConnectionManager := wsconnection.NewWSConnectionManager(pushRegistry, nodeService)
 
-	clientConnMap = make(map[string]Client)
+	wsConnectionController := wsconnection.NewWSConnectionController(wsConnectionManager)
+	messageController := message.NewMessageController(wsConnectionManager)
 
 	router := mux.NewRouter()
-	router.HandleFunc("/connect/{clientID}", connect)
-	router.HandleFunc("/sendMessage/{clientID}", sendMessage)
+
+	router.HandleFunc("/connect/{clientID}", wsConnectionController.Connect)
+	router.HandleFunc("/message/client/{clientID}", messageController.Send)
 
 	log.Println("Starting Server")
 	src := &http.Server{
