@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	messagebroker "github.com/RusseLHuang/push-message-example/message_broker"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 )
@@ -11,14 +12,17 @@ import (
 type WSConnectionController struct {
 	wsConnectionManager *WSConnectionManager
 	httpUpgrader        websocket.Upgrader
+	MessageBrokerClient *messagebroker.MessageBrokerClient
 }
 
 func NewWSConnectionController(
 	wsConnectionManager *WSConnectionManager,
+	messageBrokerClient *messagebroker.MessageBrokerClient,
 ) WSConnectionController {
 	return WSConnectionController{
 		wsConnectionManager: wsConnectionManager,
 		httpUpgrader:        websocket.Upgrader{},
+		MessageBrokerClient: messageBrokerClient,
 	}
 }
 
@@ -39,6 +43,8 @@ func (ws WSConnectionController) Connect(
 	ws.wsConnectionManager.StoreConnection(clientID, connection)
 
 	defer ws.wsConnectionManager.CloseConnection(clientID)
+
+	ws.MessageBrokerClient.Send(clientID, "movie_recommendation")
 
 	for {
 		mt, message, err := connection.ReadMessage()

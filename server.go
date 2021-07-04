@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/RusseLHuang/push-message-example/message"
+	messagebroker "github.com/RusseLHuang/push-message-example/message_broker"
 	"github.com/RusseLHuang/push-message-example/node"
 	pushregistry "github.com/RusseLHuang/push-message-example/push_registry"
 	wsconnection "github.com/RusseLHuang/push-message-example/ws_connection"
@@ -29,8 +30,9 @@ func main() {
 	nodeService := node.NewNode()
 	pushRegistry := pushregistry.NewPushRegistry()
 	wsConnectionManager := wsconnection.NewWSConnectionManager(pushRegistry, nodeService)
+	messageBrokerClient := messagebroker.NewMessageBrokerClient()
 
-	wsConnectionController := wsconnection.NewWSConnectionController(wsConnectionManager)
+	wsConnectionController := wsconnection.NewWSConnectionController(wsConnectionManager, messageBrokerClient)
 	messageController := message.NewMessageController(wsConnectionManager)
 
 	router := mux.NewRouter()
