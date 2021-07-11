@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/RusseLHuang/push-message-example/message"
 	messagebroker "github.com/RusseLHuang/push-message-example/message_broker"
+	"github.com/RusseLHuang/push-message-example/movie"
 	"github.com/RusseLHuang/push-message-example/node"
 	pushregistry "github.com/RusseLHuang/push-message-example/push_registry"
 	wsconnection "github.com/RusseLHuang/push-message-example/ws_connection"
@@ -33,12 +33,12 @@ func main() {
 	messageBrokerClient := messagebroker.NewMessageBrokerClient()
 
 	wsConnectionController := wsconnection.NewWSConnectionController(wsConnectionManager, messageBrokerClient)
-	messageController := message.NewMessageController(wsConnectionManager)
+	movieController := movie.NewMovieController(wsConnectionManager)
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/connect/{clientID}", wsConnectionController.Connect)
-	router.HandleFunc("/message/client/{clientID}", messageController.Send)
+	router.HandleFunc("/message/client/{clientID}", movieController.Send)
 
 	log.Println("Starting Server")
 	src := &http.Server{

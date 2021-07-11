@@ -1,4 +1,6 @@
 {
   "pushRegistryHost": "push-registry",
-  "pushRegistryPort": 6379
+  "pushRegistryPort": 6379,
+  "brokerHost": "rabbitmq",
+  "brokerPort": 5672
 }

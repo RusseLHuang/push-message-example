@@ -1,4 +1,4 @@
-package message
+package movie
 
 import (
 	"log"
@@ -6,21 +6,22 @@ import (
 
 	wsconnection "github.com/RusseLHuang/push-message-example/ws_connection"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 )
 
-type MessageController struct {
+type MovieController struct {
 	WSConnection *wsconnection.WSConnectionManager
 }
 
-func NewMessageController(
+func NewMovieController(
 	ws *wsconnection.WSConnectionManager,
-) MessageController {
-	return MessageController{
+) MovieController {
+	return MovieController{
 		WSConnection: ws,
 	}
 }
 
-func (m MessageController) Send(
+func (m MovieController) Send(
 	resp http.ResponseWriter,
 	req *http.Request,
 ) {
@@ -30,9 +31,10 @@ func (m MessageController) Send(
 	connection := m.WSConnection.GetConnection(clientID)
 
 	// Fire and Forget
-	if connection == nil {
+	if !m.isConnectionValid(connection) {
+		log.Println("Connection is not valid")
 		resp.WriteHeader(http.StatusAccepted)
-		resp.Write([]byte("Client ID connection is not exist in current node"))
+		resp.Write([]byte("Client ID connection is not valid"))
 		return
 	}
 
@@ -42,8 +44,20 @@ func (m MessageController) Send(
 
 	if err != nil {
 		log.Println("write:", err)
+		resp.WriteHeader(http.StatusBadRequest)
+		resp.Write([]byte("Client ID connection is not valid"))
+		return
 	}
 
 	resp.WriteHeader(http.StatusOK)
+	return
+}
 
+func (m MovieController) isConnectionValid(connection *websocket.Conn) bool {
+	if connection == nil {
+		return false
+	}
+
+	log.Println("Trying to read message")
+	return true
 }

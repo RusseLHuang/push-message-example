@@ -1,6 +1,8 @@
 package wsconnection
 
 import (
+	"log"
+
 	"github.com/RusseLHuang/push-message-example/node"
 	pushregistry "github.com/RusseLHuang/push-message-example/push_registry"
 	"github.com/gorilla/websocket"
@@ -42,5 +44,7 @@ func (ws *WSConnectionManager) GetConnection(key string) *websocket.Conn {
 }
 
 func (ws *WSConnectionManager) CloseConnection(key string) {
+	log.Println("Closing connection")
 	ws.connection[key].conn.Close()
+	delete(ws.connection, key)
 }

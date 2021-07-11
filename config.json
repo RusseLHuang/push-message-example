@@ -1,4 +1,6 @@
 {
   "pushRegistryHost": "127.0.0.1",
-  "pushRegistryPort": 6379
+  "pushRegistryPort": 6379,
+  "brokerHost": "127.0.0.1",
+  "brokerPort": 5672
 }
