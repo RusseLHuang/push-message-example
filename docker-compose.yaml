@@ -5,6 +5,8 @@ services:
   ws-server1:
     image: pushmessage:latest
     container_name: ws-server1
+    depends_on: 
+      - message-queue
     ports:
       - 81:80
     networks: 
@@ -12,6 +14,8 @@ services:
   ws-server2:
     image: pushmessage:latest
     container_name: ws-server2
+    depends_on: 
+      - message-queue
     ports:
       - 82:80
     networks: 
@@ -19,8 +23,17 @@ services:
   ws-server3:
     image: pushmessage:latest
     container_name: ws-server3
+    depends_on: 
+      - message-queue
     ports:
       - 83:80
+    networks: 
+      - ws-playground
+  ws-consumer:
+    image: pushmessage-consumer:latest
+    container_name: ws-consumer
+    depends_on: 
+      - message-queue
     networks: 
       - ws-playground
   message-queue:

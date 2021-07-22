@@ -41,6 +41,7 @@ func (pr *PushRegistry) GetPersistentConnectionID(clientID string) string {
 	val, err := pr.client.Get(pr.context, clientID).Result()
 	if err == redis.Nil {
 		fmt.Println("clientID does not exist", clientID)
+		return ""
 	} else if err != nil {
 		panic(err)
 	}
